@@ -634,6 +634,7 @@ void MainWindow::scriptContextEvent(QPoint point)
     QMenu _contextScript;
 
     QAction _reloadAction("Refresh List");
+    QAction _folderAction("Open Script Folder...");
 
     QAction _addAction("New Script...");
     QAction _editAction("Edit Script...");
@@ -643,9 +644,17 @@ void MainWindow::scriptContextEvent(QPoint point)
     connect(&_editAction, SIGNAL(triggered()), this, SLOT(editScriptEvent()));
     connect(&_deleteAction, SIGNAL(triggered()), this, SLOT(deleteScriptEvent()));
     connect(&_reloadAction, SIGNAL(triggered()), this, SLOT(refreshScriptEvent()));
+    connect(&_folderAction, SIGNAL(triggered()), this, SLOT(folderOpenEvent()));
 
     _contextScript.addAction(&_reloadAction);
+    _contextScript.addAction(&_folderAction);
     _contextScript.addSeparator();
+
+    if (ui->scriptWidget->currentItem() == nullptr)
+    {
+        _editAction.setEnabled(false);
+        _deleteAction.setEnabled(false);
+    }
 
     _contextScript.addAction(&_addAction);
     _contextScript.addAction(&_editAction);
@@ -725,3 +734,18 @@ void MainWindow::deleteScriptEvent()
 }
 
 void MainWindow::refreshScriptEvent() { parseScript(); }
+
+void MainWindow::folderOpenEvent()
+{
+    // Figure out what path we are working with.
+    // The same shit as parseScript().
+
+    auto _path = _currGame.scriptPath;
+
+    if (_path.at(0) == '/' || _path.at(0) == '\\')
+        _path = _basePath + _path;
+
+    // Open it.
+
+    QDesktopServices::openUrl(QUrl::fromLocalFile(_path));
+}

@@ -64,6 +64,7 @@ class MainWindow : public QMainWindow
         void editScriptEvent();
         void deleteScriptEvent();
         void refreshScriptEvent();
+        void folderOpenEvent();
 
     private:
         toml::value _gameToml;
