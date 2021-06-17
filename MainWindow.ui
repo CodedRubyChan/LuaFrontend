@@ -17,7 +17,11 @@
    </size>
   </property>
   <property name="windowTitle">
-   <string>LuaFrontend [v0.75 | BETA]</string>
+   <string>LuaFrontend [v1.00 | STABLE]</string>
+  </property>
+  <property name="windowIcon">
+   <iconset resource="Resources.qrc">
+    <normaloff>:/resources/iconMain.ico</normaloff>:/resources/iconMain.ico</iconset>
   </property>
   <widget class="QWidget" name="mainWidget">
    <layout class="QVBoxLayout" name="verticalLayout_2">
@@ -168,13 +172,6 @@
     <addaction name="actionConsole"/>
     <addaction name="actionAutoReload"/>
    </widget>
-   <widget class="QMenu" name="menuAbout">
-    <property name="title">
-     <string>About</string>
-    </property>
-    <addaction name="actionTK"/>
-    <addaction name="actionAbout"/>
-   </widget>
    <widget class="QMenu" name="menuEdit">
     <property name="title">
      <string>Edit</string>
@@ -183,7 +180,6 @@
    </widget>
    <addaction name="menuEngine"/>
    <addaction name="menuEdit"/>
-   <addaction name="menuAbout"/>
   </widget>
   <action name="actionConsole">
    <property name="checkable">
@@ -224,17 +220,9 @@
     <string>Switch to Dark Mode</string>
    </property>
   </action>
-  <action name="actionAbout">
-   <property name="text">
-    <string>About LuaFrontend...</string>
-   </property>
-  </action>
-  <action name="actionTK">
-   <property name="text">
-    <string>About TopazTK...</string>
-   </property>
-  </action>
  </widget>
- <resources/>
+ <resources>
+  <include location="Resources.qrc"/>
+ </resources>
  <connections/>
 </ui>

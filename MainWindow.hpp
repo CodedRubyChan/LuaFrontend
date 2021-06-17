@@ -14,6 +14,7 @@
 #include <Console.hpp>
 #include <WaitDialog.hpp>
 #include <LuaBackend.hpp>
+#include <AboutFrontend.hpp>
 
 QT_BEGIN_NAMESPACE
     namespace Ui { class MainWindow; }
@@ -66,6 +67,8 @@ class MainWindow : public QMainWindow
         void refreshScriptEvent();
         void folderOpenEvent();
 
+        void showAbout();
+
     private:
         toml::value _gameToml;
 
@@ -78,6 +81,7 @@ class MainWindow : public QMainWindow
 
         Console* _console;
         WaitDialog* _waitWindow;
+        AboutFrontend* _aboutDiag;
 
         QTimer* _runTimer;
 

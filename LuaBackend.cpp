@@ -22,7 +22,7 @@ void LuaBackend::LoadScripts(const char* ScrPath, uint64_t BaseInput)
 	{
         auto _path = _iterator.next();
 
-        if (_path.contains(".lua"))
+        if (_path.contains(".lua") && !_path.contains("io_packages")&& !_path.contains("io_load"))
         {
             LuaScript* _script = new LuaScript();
 

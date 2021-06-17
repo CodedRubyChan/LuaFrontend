@@ -17,6 +17,8 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     _darkPalBool = false;
     _consoleBool = false;
 
+    _aboutDiag = new AboutFrontend(this);
+
     _console = new Console(this);
     _waitWindow = new WaitDialog(this);
 
@@ -43,6 +45,9 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
 
     connect(ui->gameWidget, SIGNAL(currentRowChanged(int)), this, SLOT(gameClickEvent(int)));
     connect(ui->scriptWidget, SIGNAL(itemDoubleClicked(QTreeWidgetItem*, int)), this, SLOT(scriptClickEvent(QTreeWidgetItem*, int)));
+
+    QAction *aboutAction = ui->mainMenu->addAction("About");
+    connect(aboutAction, SIGNAL(triggered()), this, SLOT(showAbout()));
 
     // CONTEXT MENU CONSTRUCTOR
 
@@ -227,14 +232,14 @@ int MainWindow::parseScript()
 
                 // Has a warning? Uncheck it.
 
-                _item->setIcon(0, QIcon(":/resources/warning.ico"));
+                _item->setIcon(0, QIcon(":/resources/warning.png"));
                 _item->setCheckState(0, Qt::CheckState::Unchecked);
                 _item->setToolTip(0, _message);
             }
 
             else if (!_initCheck && !_frameCheck)
             {
-                _item->setIcon(0, QIcon(":/resources/error.ico"));
+                _item->setIcon(0, QIcon(":/resources/error.png"));
                 _item->setToolTip(0, "Error #199: Not a valid LuaBackend script.\n"
                                      "Cannot be executed.");
             }
@@ -244,7 +249,7 @@ int MainWindow::parseScript()
                 // All OK scripts are checked off by default.
 
                 _item->setCheckState(0, Qt::CheckState::Checked);
-                _item->setIcon(0, QIcon(":/resources/good.ico"));
+                _item->setIcon(0, QIcon(":/resources/good.png"));
             }
         }
 
@@ -256,7 +261,7 @@ int MainWindow::parseScript()
             LuaError _err = _script->parseResult;
 
             _item->setData(0, 1392, QVariant(_err.what()));
-            _item->setIcon(0, QIcon(":/resources/error.ico"));
+            _item->setIcon(0, QIcon(":/resources/error.png"));
             _item->setToolTip(0, "Error #200: Not a valid Lua script.\n"
                                  "Fatal errors were encountered.");
         }
@@ -600,7 +605,7 @@ void MainWindow::runEvent()
 
 // CONTEXT CONSTRUCTOR EVENTS
 
-void MainWindow::gameContextEvent(QPoint point)
+void MainWindow::gameContextEvent(QPoint)
 {
     /*
 
@@ -748,4 +753,10 @@ void MainWindow::folderOpenEvent()
     // Open it.
 
     QDesktopServices::openUrl(QUrl::fromLocalFile(_path));
+}
+
+
+void MainWindow::showAbout()
+{
+    _aboutDiag->show();
 }
