@@ -31,7 +31,7 @@ BigEndian = true
 Executable = "RPCS3.exe"
 
 [GameEntry04]
-Title = "Kingdom Hearts BBS [GL]"
+Title = "Kingdom Hearts Birth by Sleep [GL]"
 Path = "/scripts/khbbs/"
 Address = "0"
 Offset = "60E334"
