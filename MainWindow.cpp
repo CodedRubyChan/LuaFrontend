@@ -14,6 +14,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     // VARIABLE INITIALIZATION
 
     _autoBool = false;
+    _threadBool = false;
     _darkPalBool = false;
     _consoleBool = false;
 
@@ -38,13 +39,14 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     connect(ui->actionDark, SIGNAL(triggered()), this, SLOT(darkToggle()));
     connect(ui->actionAutoReload, SIGNAL(triggered()), this, SLOT(autoToggle()));
     connect(ui->actionConsole, SIGNAL(triggered()), this, SLOT(consoleToggle()));
+    connect(ui->actionThreading, SIGNAL(triggered()), this, SLOT(threadToggle()));
 
     connect(ui->actionStop, SIGNAL(triggered()), this, SLOT(stopEvent()));
     connect(ui->actionStart, SIGNAL(triggered()), this, SLOT(startEvent()));
     connect(ui->actionReload, SIGNAL(triggered()), this, SLOT(reloadEvent()));
 
     connect(ui->gameWidget, SIGNAL(currentRowChanged(int)), this, SLOT(gameClickEvent(int)));
-    connect(ui->scriptWidget, SIGNAL(itemDoubleClicked(QTreeWidgetItem*, int)), this, SLOT(scriptClickEvent(QTreeWidgetItem*, int)));
+    connect(ui->scriptWidget, SIGNAL(itemDoubleClicked(QTreeWidgetItem*,int)), this, SLOT(scriptClickEvent(QTreeWidgetItem*,int)));
 
     QAction *aboutAction = ui->mainMenu->addAction("About");
     connect(aboutAction, SIGNAL(triggered()), this, SLOT(showAbout()));
@@ -78,6 +80,53 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     _darkPal.setColor(QPalette::Disabled, QPalette::HighlightedText, QColor(127,127,127));
 
     _lightPal = this->style()->standardPalette();
+
+    // PREFERENCE LOADS
+
+    auto _tomlDir = QString(_basePath + "\\configs\\prefConfig.toml");
+    toml::value _prefToml;
+
+    try
+    {
+        _prefToml = toml::parse(_tomlDir.toStdString());
+
+        auto _tblStr = QString("Preferences");
+        _prefTable = toml::find(_prefToml, _tblStr.toStdString());
+
+        auto _autoTemp = toml::find(_prefTable, "autoBool").as_boolean();
+        auto _threadTemp = toml::find(_prefTable, "threadBool").as_boolean();
+        auto _darkPalTemp = toml::find(_prefTable, "darkPalBool").as_boolean();
+        auto _consoleTemp = toml::find(_prefTable, "consoleBool").as_boolean();
+
+        if (_autoTemp)
+            autoToggle();
+
+        if (_threadTemp)
+            threadToggle();
+
+        if (_darkPalTemp)
+            darkToggle();
+
+        if (_consoleTemp)
+            consoleToggle();
+    }
+
+    catch (std::runtime_error _ex) {
+
+        QMessageBox _warnBox;
+
+        _warnBox.setMinimumWidth(256);
+        _warnBox.setIcon(QMessageBox::Warning);
+        _warnBox.setStandardButtons(QMessageBox::Ok);
+
+        _warnBox.setDetailedText(_ex.what());
+        _warnBox.setWindowTitle("Error #403 - Cannot access file.");
+
+        _warnBox.setText("The file \"prefConfig.toml\" cannot be found or accessed.\n"
+                          "Default preferences will be loaded!");
+
+        _warnBox.exec();
+    }
 
     // EXECUTION
 
@@ -303,6 +352,9 @@ void MainWindow::darkToggle()
     ui->actionDark->setText(_titleTxt);
 
     _darkPalBool = !_darkPalBool;
+    _prefTable["darkPalBool"] = _darkPalBool;
+
+    serializePref();
 }
 
 void MainWindow::autoToggle()
@@ -313,6 +365,9 @@ void MainWindow::autoToggle()
     ui->actionAutoReload->setText(_titleTxt);
 
     _autoBool = !_autoBool;
+    _prefTable["autoBool"] = _autoBool;
+
+    serializePref();
 }
 
 void MainWindow::consoleToggle()
@@ -325,6 +380,45 @@ void MainWindow::consoleToggle()
     ui->actionConsole->setText(_titleTxt);
 
     _consoleBool = !_consoleBool;
+    _prefTable["consoleBool"] = _consoleBool;
+
+    serializePref();
+}
+
+void MainWindow::threadToggle()
+{
+    bool _threadAccept = _threadBool;
+
+    if (!_threadBool && ui->mainWidget->isVisible())
+    {
+        QMessageBox _warnBox;
+
+        _warnBox.setMinimumWidth(256);
+        _warnBox.setIcon(QMessageBox::Warning);
+        _warnBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+
+        _warnBox.setWindowTitle("A lil' note about Thread-per-Script.");
+
+        _warnBox.setText("This option enables the Thread-per-Script functionality.\n"
+                         "This functionality is currently in Beta and requires as many threads as\n"
+                         "there are scripts. Are you sure you want to enable it?");
+
+        if (_warnBox.exec() == QMessageBox::Yes)
+            _threadAccept = true;
+    }
+
+    if (_threadAccept || !ui->mainWidget->isVisible())
+    {
+        QString _titleTxt = "%1 Multi-Threading";
+
+        _threadBool ? _titleTxt = _titleTxt.arg("Enable") : _titleTxt = _titleTxt.arg("Disable");
+        ui->actionThreading->setText(_titleTxt);
+
+        _threadBool = !_threadBool;
+        _prefTable["threadBool"] = _threadBool;
+
+        serializePref();
+    }
 }
 
 // TRIGGER EVENTS
@@ -349,6 +443,12 @@ void MainWindow::stopEvent()
 
     _runTimer->stop();
 
+    if (_threadBool)
+        for (auto _thread : _threadList)
+            _thread->stop();
+
+    _threadList.clear();
+
     // Restore the buttons.
 
     ui->actionStart->setEnabled(true);
@@ -363,9 +463,15 @@ void MainWindow::reloadEvent()
     _console->close();
     _console = new Console(this);
 
-    // Stop the run thread.
+    // Stop the run thread... or threads.
 
     _runTimer->stop();
+
+    if (_threadBool)
+        for (auto _thread : _threadList)
+            _thread->stop();
+
+    _threadList.clear();
 
     // Run the latch thread with the window.
 
@@ -537,6 +643,24 @@ void MainWindow::connectEvent()
         consoleToggle();
 
     _runTimer->start(backend->frameLimit);
+
+    if (_threadBool)
+    {
+        _threadList.clear();
+
+        for (auto _script : backend->loadedScripts)
+        {
+            auto _thread = new LuaThread(_console);
+
+            _thread->exeScript = _script;
+            _thread->runInterval = backend->frameLimit;
+
+            _threadList.append(_thread);
+        }
+
+        for (auto _thread : _threadList)
+            _thread->start();
+    }
 }
 
 void MainWindow::latchEvent()
@@ -559,26 +683,36 @@ void MainWindow::latchEvent()
 void MainWindow::runEvent()
 {
     // The main script thread.
+    // Only runs if single-threaded.
 
-    for (int i = 0; i < backend->loadedScripts.size(); i++)
+    if (!_threadBool)
     {
-        auto _script = backend->loadedScripts[i];
-
-        if (_script->frameFunction)
+        for (int i = 0; i < backend->loadedScripts.size(); i++)
         {
-            auto _result = _script->frameFunction();
+            auto _script = backend->loadedScripts[i];
 
-            if (!_result.valid())
+            if (_script->frameFunction)
             {
-                sol::error _err = _result;
+                auto _result = _script->frameFunction();
 
-                auto _errStr = QString(_err.what());
-                _console->printMessage(_errStr + "<br>", 3);
+                if (!_result.valid())
+                {
+                    sol::error _err = _result;
 
-                backend->loadedScripts.erase(backend->loadedScripts.begin() + i);
+                    auto _errStr = QString(_err.what());
+                    _console->printMessage(_errStr + "<br>", 3);
+
+                    backend->loadedScripts.erase(backend->loadedScripts.begin() + i);
+                }
             }
         }
     }
+
+    // If the interval changes, apply the changes to all script threads.
+
+    else if (_threadList[0]->runInterval != backend->frameLimit)
+        for (auto _thread : _threadList)
+            _thread->runInterval = backend->frameLimit;
 
     // If the interval changes, apply this change.
 
@@ -755,8 +889,24 @@ void MainWindow::folderOpenEvent()
     QDesktopServices::openUrl(QUrl::fromLocalFile(_path));
 }
 
-
 void MainWindow::showAbout()
 {
     _aboutDiag->show();
+}
+
+// MISC
+
+void MainWindow::serializePref()
+{
+     auto _tomlDir = QString(_basePath + "\\configs\\prefConfig.toml");
+
+     stringstream _str;
+     QFile _tomlFile(_tomlDir);
+
+     _str << "[Preferences]\n";
+     _str << _prefTable;
+     QString _writeStr = QString::fromStdString(_str.str());
+
+     _tomlFile.open(QIODevice::WriteOnly);
+     _tomlFile.write(_writeStr.toUtf8());
 }

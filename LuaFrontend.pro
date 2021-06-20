@@ -6,9 +6,11 @@ LIBS += -L$$PWD/libraries/ -llua -ldiscord-rpc
 PRE_TARGETDEPS += $$PWD/libraries/discord-rpc.lib
 
 RC_ICONS = resources/iconMain.ico
+RC_FILE = Windows.rc
 
 SOURCES += \
     AboutFrontend.cpp \
+    LuaThread.cpp \
     Main.cpp \
     Console.cpp \
     LuaBackend.cpp \
@@ -18,9 +20,11 @@ SOURCES += \
 HEADERS += \
     AboutFrontend.hpp \
     Console.hpp \
+    LuaThread.hpp \
     WaitDialog.hpp \
     LuaBackend.hpp \
     MainWindow.hpp \
+    version.h
 
 FORMS += \
     AboutFrontend.ui \
@@ -42,3 +46,6 @@ DEPENDPATH += \
 
 RESOURCES += \
     Resources.qrc
+
+DISTFILES += \
+    Windows.rc

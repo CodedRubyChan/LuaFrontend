@@ -14,6 +14,7 @@
 #include <Console.hpp>
 #include <WaitDialog.hpp>
 #include <LuaBackend.hpp>
+#include <LuaThread.hpp>
 #include <AboutFrontend.hpp>
 
 QT_BEGIN_NAMESPACE
@@ -55,6 +56,7 @@ class MainWindow : public QMainWindow
         void darkToggle();
         void reloadEvent();
         void connectEvent();
+        void threadToggle();
         void gameClickEvent(int);
         void scriptClickEvent(QTreeWidgetItem*, int);
 
@@ -70,12 +72,14 @@ class MainWindow : public QMainWindow
         void showAbout();
 
     private:
+        toml::value _prefTable;
         toml::value _gameToml;
 
         QPalette _darkPal;
         QPalette _lightPal;
 
         bool _autoBool;
+        bool _threadBool;
         bool _consoleBool;
         bool _darkPalBool;
 
@@ -84,12 +88,15 @@ class MainWindow : public QMainWindow
         AboutFrontend* _aboutDiag;
 
         QTimer* _runTimer;
+        QList<LuaThread*> _threadList;
 
         QString _basePath;
         QGameInfo _currGame;
 
         int parseGame();
         int parseScript();
+
+        void serializePref();
 
         Ui::MainWindow *ui;
 

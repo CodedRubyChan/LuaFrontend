@@ -17,10 +17,10 @@
    </size>
   </property>
   <property name="windowTitle">
-   <string>LuaFrontend [v1.00 | STABLE]</string>
+   <string>LuaFrontend [v1.10 | STABLE]</string>
   </property>
   <property name="windowIcon">
-   <iconset resource="Resources.qrc">
+   <iconset>
     <normaloff>:/resources/iconMain.ico</normaloff>:/resources/iconMain.ico</iconset>
   </property>
   <widget class="QWidget" name="mainWidget">
@@ -171,6 +171,7 @@
     <addaction name="separator"/>
     <addaction name="actionConsole"/>
     <addaction name="actionAutoReload"/>
+    <addaction name="actionThreading"/>
    </widget>
    <widget class="QMenu" name="menuEdit">
     <property name="title">
@@ -220,9 +221,12 @@
     <string>Switch to Dark Mode</string>
    </property>
   </action>
+  <action name="actionThreading">
+   <property name="text">
+    <string>Enable Multi-Threading</string>
+   </property>
+  </action>
  </widget>
- <resources>
-  <include location="Resources.qrc"/>
- </resources>
+ <resources/>
  <connections/>
 </ui>

@@ -57,7 +57,7 @@
     </font>
    </property>
    <property name="text">
-    <string>LuaFrontend v1.00</string>
+    <string>LuaFrontend v1.10</string>
    </property>
   </widget>
   <widget class="QLabel" name="QtLabel">
